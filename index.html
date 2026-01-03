@@ -27,36 +27,35 @@
 
     header {
         text-align: center;
-        margin-bottom: 40px;
-        padding-top: 20px;
+        margin-bottom: 20px;
+        padding-top: 10px;
     }
 
     h1 {
-        font-size: 2.5rem;
+        font-size: 1.8rem;
         color: #065f46;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
 
     .subtitle {
-        font-size: 1.3rem;
+        font-size: 0.9rem;
         color: #047857;
     }
 
     .save-box {
         background: white;
-        border-radius: 30px;
-        padding: 40px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        margin-bottom: 30px;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
         text-align: center;
     }
 
     .save-instruction {
-        font-size: 1.4rem;
+        font-size: 0.9rem;
         color: #065f46;
-        margin-bottom: 25px;
+        margin-bottom: 12px;
         font-weight: bold;
-        line-height: 1.6;
     }
 
     #saveButton {
@@ -64,13 +63,13 @@
         background: linear-gradient(135deg, #059669 0%, #047857 100%);
         color: white;
         border: none;
-        padding: 30px;
-        font-size: 2rem;
+        padding: 15px;
+        font-size: 1.1rem;
         font-weight: bold;
-        border-radius: 25px;
+        border-radius: 15px;
         cursor: pointer;
         transition: all 0.3s;
-        box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
+        box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
     }
 
     #saveButton:active {
@@ -84,8 +83,8 @@
 
     .button-group {
         display: flex;
-        gap: 15px;
-        margin-top: 20px;
+        gap: 10px;
+        margin-top: 12px;
     }
 
     .btn-secondary {
@@ -93,10 +92,10 @@
         background: #0ea5e9;
         color: white;
         border: none;
-        padding: 20px;
-        font-size: 1.3rem;
+        padding: 12px;
+        font-size: 0.9rem;
         font-weight: bold;
-        border-radius: 20px;
+        border-radius: 12px;
         cursor: pointer;
         transition: all 0.3s;
     }
@@ -106,105 +105,79 @@
     }
 
     .list-header {
-        font-size: 1.5rem;
+        font-size: 1rem;
         font-weight: bold;
         color: #065f46;
-        margin-bottom: 20px;
-        padding: 0 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        margin-bottom: 12px;
+        padding: 0 5px;
     }
 
     .item {
         background: white;
-        border-radius: 30px;
-        padding: 25px;
-        margin-bottom: 20px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        transition: box-shadow 0.3s;
+        border-radius: 12px;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
 
-    .item:hover {
-        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    .item-content {
+        flex: 1;
+        min-width: 0;
     }
 
     .item-date {
-        font-size: 1.1rem;
+        font-size: 0.7rem;
         color: #059669;
         font-weight: 600;
-        margin-bottom: 15px;
+        margin-bottom: 4px;
     }
 
     .item-text {
-        font-size: 1.3rem;
+        font-size: 0.85rem;
         color: #1f2937;
-        line-height: 1.8;
-        margin-bottom: 20px;
-        white-space: pre-wrap;
-        word-break: break-word;
-        max-height: 300px;
-        overflow-y: auto;
+        line-height: 1.4;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .item-buttons {
-        display: flex;
-        gap: 15px;
-    }
-
-    .copy-btn, .delete-btn, .save-btn {
-        flex: 1;
-        border: none;
-        padding: 20px;
-        font-size: 1.3rem;
-        font-weight: bold;
-        border-radius: 20px;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .copy-btn {
+    .item-copy-btn {
+        flex-shrink: 0;
         background: #059669;
         color: white;
+        border: none;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
     }
 
-    .copy-btn:hover {
-        background: #047857;
+    .item-copy-btn:active {
+        transform: scale(0.95);
     }
 
-    .copy-btn.copied {
+    .item-copy-btn.copied {
         background: #065f46;
-    }
-
-    .save-btn {
-        background: #0ea5e9;
-        color: white;
-    }
-
-    .save-btn:hover {
-        background: #0284c7;
-    }
-
-    .delete-btn {
-        background: #dc2626;
-        color: white;
-    }
-
-    .delete-btn:hover {
-        background: #b91c1c;
     }
 
     .empty {
         background: white;
-        border-radius: 30px;
-        padding: 60px;
+        border-radius: 15px;
+        padding: 30px;
         text-align: center;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
     .empty-text {
-        font-size: 1.5rem;
+        font-size: 0.9rem;
         color: #059669;
+        line-height: 1.5;
     }
 
     @keyframes shake {
@@ -376,12 +349,12 @@
     async function copyToClipboard(text, btn) {
         try {
             await navigator.clipboard.writeText(text);
-            btn.textContent = '✓ コピー済';
+            btn.textContent = '✓';
             btn.classList.add('copied');
             setTimeout(() => {
-                btn.textContent = '📋 コピー';
+                btn.textContent = 'コピー';
                 btn.classList.remove('copied');
-            }, 2000);
+            }, 1500);
         } catch (error) {
             alert('コピーに失敗しました');
         }
@@ -414,23 +387,24 @@
             return;
         }
         
-        itemList.innerHTML = items.map(item => `
-            <div class="item">
-                <div class="item-date">${formatDate(item.timestamp)}</div>
-                <div class="item-text">${escapeHtml(item.text)}</div>
-                <div class="item-buttons">
-                    <button class="copy-btn" onclick="copyToClipboard(\`${escapeHtml(item.text).replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, this)">
-                        📋 コピー
-                    </button>
-                    <button class="save-btn" onclick='downloadItem(${JSON.stringify(item)})'>
-                        💾 保存
-                    </button>
-                    <button class="delete-btn" onclick="deleteItem('${item.id}')">
-                        🗑️ 削除
+        itemList.innerHTML = items.map(item => {
+            const truncatedText = item.text.length > 20 
+                ? item.text.substring(0, 20) + '...' 
+                : item.text;
+            const escapedFull = escapeHtml(item.text).replace(/`/g, '\\`').replace(/\$/g, '\\$');
+            
+            return `
+                <div class="item">
+                    <div class="item-content">
+                        <div class="item-date">${formatDate(item.timestamp)}</div>
+                        <div class="item-text" title="${escapeHtml(item.text)}">${escapeHtml(truncatedText)}</div>
+                    </div>
+                    <button class="item-copy-btn" onclick="copyToClipboard(\`${escapedFull}\`, this)">
+                        コピー
                     </button>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function escapeHtml(text) {
