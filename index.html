@@ -42,50 +42,44 @@
         color: #047857;
     }
 
-    .status-box {
+    .save-box {
         background: white;
         border-radius: 30px;
-        padding: 30px;
+        padding: 40px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         margin-bottom: 30px;
+        text-align: center;
     }
 
-    .status-text {
-        font-size: 1.5rem;
+    .save-instruction {
+        font-size: 1.4rem;
         color: #065f46;
-        margin-bottom: 15px;
+        margin-bottom: 25px;
         font-weight: bold;
-        text-align: center;
-    }
-
-    .status-detail {
-        font-size: 1.2rem;
-        color: #059669;
         line-height: 1.6;
-        text-align: center;
-        margin-bottom: 20px;
     }
 
-    .indicator {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        margin-right: 10px;
-        animation: pulse 2s infinite;
+    #saveButton {
+        width: 100%;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
+        border: none;
+        padding: 30px;
+        font-size: 2rem;
+        font-weight: bold;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
     }
 
-    .indicator.active {
-        background: #10b981;
+    #saveButton:active {
+        transform: scale(0.95);
+        box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
     }
 
-    .indicator.waiting {
-        background: #f59e0b;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+    #saveButton.success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     }
 
     .button-group {
@@ -94,8 +88,10 @@
         margin-top: 20px;
     }
 
-    .btn {
+    .btn-secondary {
         flex: 1;
+        background: #0ea5e9;
+        color: white;
         border: none;
         padding: 20px;
         font-size: 1.3rem;
@@ -103,20 +99,6 @@
         border-radius: 20px;
         cursor: pointer;
         transition: all 0.3s;
-    }
-
-    .btn-primary {
-        background: #059669;
-        color: white;
-    }
-
-    .btn-primary:hover {
-        background: #047857;
-    }
-
-    .btn-secondary {
-        background: #0ea5e9;
-        color: white;
     }
 
     .btn-secondary:hover {
@@ -132,17 +114,6 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-    }
-
-    .download-all {
-        background: #0ea5e9;
-        color: white;
-        border: none;
-        padding: 15px 25px;
-        font-size: 1.1rem;
-        font-weight: bold;
-        border-radius: 15px;
-        cursor: pointer;
     }
 
     .item {
@@ -172,6 +143,8 @@
         margin-bottom: 20px;
         white-space: pre-wrap;
         word-break: break-word;
+        max-height: 300px;
+        overflow-y: auto;
     }
 
     .item-buttons {
@@ -233,6 +206,16 @@
         font-size: 1.5rem;
         color: #059669;
     }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+
+    .shake {
+        animation: shake 0.3s;
+    }
 </style>
 ```
 
@@ -241,21 +224,17 @@
     <div class="container">
         <header>
             <h1>クリップボード</h1>
-            <p class="subtitle">コピーした内容を自動保存</p>
+            <p class="subtitle">コピーした内容を保存</p>
         </header>
 
 ```
-    <div class="status-box">
-        <div class="status-text">
-            <span class="indicator active" id="indicator"></span>
-            <span id="statusText">自動監視中...</span>
+    <div class="save-box">
+        <div class="save-instruction">
+            コピーしたら、このボタンをタップ
         </div>
-        <div class="status-detail" id="statusDetail">
-            コピーすると自動で保存されます
-        </div>
+        <button id="saveButton">📋 保存する</button>
         <div class="button-group">
-            <button class="btn btn-primary" id="manualButton">📋 今すぐ保存</button>
-            <button class="btn btn-secondary" id="downloadButton">💾 全件保存</button>
+            <button class="btn-secondary" id="downloadButton">💾 全件ダウンロード</button>
         </div>
     </div>
 
@@ -267,67 +246,54 @@
 
 <script>
     let items = [];
-    let lastClipboardText = '';
-    let checkInterval;
 
     loadItems();
-    startAutoCheck();
 
-    // 自動チェック開始
-    function startAutoCheck() {
-        checkInterval = setInterval(checkClipboard, 2000);
-        updateStatus('自動監視中', 'コピーすると自動で保存されます');
-    }
-
-    // クリップボードチェック
-    async function checkClipboard() {
+    // 保存ボタン - ワンタップで保存
+    document.getElementById('saveButton').addEventListener('click', async () => {
+        const btn = document.getElementById('saveButton');
+        
         try {
             const text = await navigator.clipboard.readText();
             
-            if (text && text.trim() && text !== lastClipboardText) {
-                const exists = items.some(item => item.text === text.trim());
-                
-                if (!exists) {
-                    lastClipboardText = text;
-                    await addItem(text);
-                    updateStatus('保存完了！', '新しい内容を保存しました', true);
-                    
-                    setTimeout(() => {
-                        updateStatus('自動監視中', 'コピーすると自動で保存されます');
-                    }, 2000);
-                }
-            }
-        } catch (error) {
-            if (error.name === 'NotAllowedError') {
-                clearInterval(checkInterval);
-                updateStatus('権限が必要です', '「今すぐ保存」を押して許可してください', false);
-            }
-        }
-    }
-
-    // 手動保存ボタン
-    document.getElementById('manualButton').addEventListener('click', async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            if (!text.trim()) {
-                alert('クリップボードが空です');
+            if (!text || !text.trim()) {
+                btn.textContent = '❌ クリップボードが空です';
+                btn.classList.add('shake');
+                setTimeout(() => {
+                    btn.textContent = '📋 保存する';
+                    btn.classList.remove('shake');
+                }, 2000);
                 return;
             }
 
             const exists = items.some(item => item.text === text.trim());
             if (exists) {
-                alert('同じ内容が既に保存されています');
+                btn.textContent = '⚠️ 既に保存済みです';
+                btn.classList.add('shake');
+                setTimeout(() => {
+                    btn.textContent = '📋 保存する';
+                    btn.classList.remove('shake');
+                }, 2000);
                 return;
             }
 
             await addItem(text);
-            lastClipboardText = text;
             
-            if (!checkInterval) {
-                startAutoCheck();
-            }
+            // 成功アニメーション
+            btn.textContent = '✅ 保存しました！';
+            btn.classList.add('success');
+            setTimeout(() => {
+                btn.textContent = '📋 保存する';
+                btn.classList.remove('success');
+            }, 1500);
+            
         } catch (error) {
-            alert('クリップボードの読み取りに失敗しました');
+            btn.textContent = '❌ 権限が必要です';
+            btn.classList.add('shake');
+            setTimeout(() => {
+                btn.textContent = '📋 保存する';
+                btn.classList.remove('shake');
+            }, 2000);
         }
     });
 
@@ -379,21 +345,6 @@
         await saveItem(item);
         items.unshift(item);
         renderItems();
-    }
-
-    // ステータス更新
-    function updateStatus(mainText, detailText, isSuccess = null) {
-        document.getElementById('statusText').textContent = mainText;
-        document.getElementById('statusDetail').textContent = detailText;
-        
-        const indicator = document.getElementById('indicator');
-        if (isSuccess === true) {
-            indicator.className = 'indicator active';
-        } else if (isSuccess === false) {
-            indicator.className = 'indicator waiting';
-        } else {
-            indicator.className = 'indicator active';
-        }
     }
 
     async function loadItems() {
@@ -457,7 +408,7 @@
         if (items.length === 0) {
             itemList.innerHTML = `
                 <div class="empty">
-                    <p class="empty-text">まだ保存された内容がありません</p>
+                    <p class="empty-text">まだ保存された内容がありません<br>上のボタンをタップして保存しましょう</p>
                 </div>
             `;
             return;
@@ -487,12 +438,6 @@
         div.textContent = text;
         return div.innerHTML;
     }
-
-    window.addEventListener('beforeunload', () => {
-        if (checkInterval) {
-            clearInterval(checkInterval);
-        }
-    });
 </script>
 ```
 
