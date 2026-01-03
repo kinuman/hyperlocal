@@ -220,6 +220,25 @@
 <script>
     let items = [];
 
+    // テーマ管理
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.body.className = savedTheme + '-mode';
+    updateThemeIcon();
+
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.body.className = newTheme + '-mode';
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon();
+    });
+
+    function updateThemeIcon() {
+        const isDark = document.body.classList.contains('dark-mode');
+        themeToggle.textContent = isDark ? '☀️' : '🌙';
+    }
+
     loadItems();
 
     // 保存ボタン - ワンタップで保存
