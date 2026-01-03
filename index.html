@@ -48,7 +48,6 @@
         padding: 30px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         margin-bottom: 30px;
-        text-align: center;
     }
 
     .status-text {
@@ -56,12 +55,15 @@
         color: #065f46;
         margin-bottom: 15px;
         font-weight: bold;
+        text-align: center;
     }
 
     .status-detail {
         font-size: 1.2rem;
         color: #059669;
         line-height: 1.6;
+        text-align: center;
+        margin-bottom: 20px;
     }
 
     .indicator {
@@ -86,22 +88,39 @@
         50% { opacity: 0.5; }
     }
 
-    #manualButton {
-        width: 100%;
-        background: #059669;
-        color: white;
+    .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .btn {
+        flex: 1;
         border: none;
         padding: 20px;
-        font-size: 1.5rem;
+        font-size: 1.3rem;
         font-weight: bold;
         border-radius: 20px;
         cursor: pointer;
-        transition: background 0.3s;
-        margin-top: 15px;
+        transition: all 0.3s;
     }
 
-    #manualButton:hover {
+    .btn-primary {
+        background: #059669;
+        color: white;
+    }
+
+    .btn-primary:hover {
         background: #047857;
+    }
+
+    .btn-secondary {
+        background: #0ea5e9;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #0284c7;
     }
 
     .list-header {
@@ -110,6 +129,20 @@
         color: #065f46;
         margin-bottom: 20px;
         padding: 0 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .download-all {
+        background: #0ea5e9;
+        color: white;
+        border: none;
+        padding: 15px 25px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border-radius: 15px;
+        cursor: pointer;
     }
 
     .item {
@@ -146,7 +179,7 @@
         gap: 15px;
     }
 
-    .copy-btn, .delete-btn {
+    .copy-btn, .delete-btn, .save-btn {
         flex: 1;
         border: none;
         padding: 20px;
@@ -168,6 +201,15 @@
 
     .copy-btn.copied {
         background: #065f46;
+    }
+
+    .save-btn {
+        background: #0ea5e9;
+        color: white;
+    }
+
+    .save-btn:hover {
+        background: #0284c7;
     }
 
     .delete-btn {
@@ -211,10 +253,15 @@
         <div class="status-detail" id="statusDetail">
             コピーすると自動で保存されます
         </div>
-        <button id="manualButton">📋 今すぐ保存</button>
+        <div class="button-group">
+            <button class="btn btn-primary" id="manualButton">📋 今すぐ保存</button>
+            <button class="btn btn-secondary" id="downloadButton">💾 全件保存</button>
+        </div>
     </div>
 
-    <div class="list-header" id="listHeader">保存した内容（0件）</div>
+    <div class="list-header">
+        <span id="listHeader">保存した内容（0件）</span>
+    </div>
     <div id="itemList"></div>
 </div>
 
@@ -228,9 +275,8 @@
 
     // 自動チェック開始
     function startAutoCheck() {
-        // 3秒ごとにクリップボードをチェック
-        checkInterval = setInterval(checkClipboard, 3000);
-        updateStatus('監視中', '3秒ごとに自動チェック');
+        checkInterval = setInterval(checkClipboard, 2000);
+        updateStatus('自動監視中', 'コピーすると自動で保存されます');
     }
 
     // クリップボードチェック
@@ -238,7 +284,6 @@
         try {
             const text = await navigator.clipboard.readText();
             
-            // 新しいテキストがある場合のみ保存
             if (text && text.trim() && text !== lastClipboardText) {
                 const exists = items.some(item => item.text === text.trim());
                 
@@ -247,17 +292,15 @@
                     await addItem(text);
                     updateStatus('保存完了！', '新しい内容を保存しました', true);
                     
-                    // 2秒後に通常表示に戻す
                     setTimeout(() => {
-                        updateStatus('監視中', '3秒ごとに自動チェック');
+                        updateStatus('自動監視中', 'コピーすると自動で保存されます');
                     }, 2000);
                 }
             }
         } catch (error) {
-            // 権限がない場合
             if (error.name === 'NotAllowedError') {
                 clearInterval(checkInterval);
-                updateStatus('権限が必要です', '下のボタンを押して許可してください', false);
+                updateStatus('権限が必要です', '「今すぐ保存」を押して許可してください', false);
             }
         }
     }
@@ -280,7 +323,6 @@
             await addItem(text);
             lastClipboardText = text;
             
-            // 自動チェックを再開
             if (!checkInterval) {
                 startAutoCheck();
             }
@@ -288,6 +330,43 @@
             alert('クリップボードの読み取りに失敗しました');
         }
     });
+
+    // 全件ダウンロード
+    document.getElementById('downloadButton').addEventListener('click', () => {
+        if (items.length === 0) {
+            alert('保存された内容がありません');
+            return;
+        }
+
+        const content = items.map((item, index) => {
+            const date = new Date(item.timestamp).toLocaleString('ja-JP');
+            return `[${index + 1}] ${date}\n${item.text}\n${'='.repeat(50)}`;
+        }).join('\n\n');
+
+        downloadTextFile(content, `clipboard_${Date.now()}.txt`);
+        alert(`${items.length}件をダウンロードしました`);
+    });
+
+    // 個別ダウンロード
+    function downloadItem(item) {
+        const date = new Date(item.timestamp).toLocaleString('ja-JP');
+        const content = `保存日時: ${date}\n\n${item.text}`;
+        const filename = `clip_${item.id}.txt`;
+        downloadTextFile(content, filename);
+    }
+
+    // ファイルダウンロード
+    function downloadTextFile(content, filename) {
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
 
     // アイテム追加
     async function addItem(text) {
@@ -346,7 +425,7 @@
     async function copyToClipboard(text, btn) {
         try {
             await navigator.clipboard.writeText(text);
-            btn.textContent = '✓ コピーしました！';
+            btn.textContent = '✓ コピー済';
             btn.classList.add('copied');
             setTimeout(() => {
                 btn.textContent = '📋 コピー';
@@ -366,7 +445,7 @@
         if (diff < 3600000) return `${Math.floor(diff / 60000)}分前`;
         if (diff < 86400000) return `${Math.floor(diff / 3600000)}時間前`;
         
-        return `${date.getMonth() + 1}月${date.getDate()}日`;
+        return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
 
     function renderItems() {
@@ -389,8 +468,11 @@
                 <div class="item-date">${formatDate(item.timestamp)}</div>
                 <div class="item-text">${escapeHtml(item.text)}</div>
                 <div class="item-buttons">
-                    <button class="copy-btn" onclick="copyToClipboard(\`${escapeHtml(item.text).replace(/`/g, '\\`')}\`, this)">
+                    <button class="copy-btn" onclick="copyToClipboard(\`${escapeHtml(item.text).replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, this)">
                         📋 コピー
+                    </button>
+                    <button class="save-btn" onclick='downloadItem(${JSON.stringify(item)})'>
+                        💾 保存
                     </button>
                     <button class="delete-btn" onclick="deleteItem('${item.id}')">
                         🗑️ 削除
@@ -406,7 +488,6 @@
         return div.innerHTML;
     }
 
-    // ページを離れる時にクリーンアップ
     window.addEventListener('beforeunload', () => {
         if (checkInterval) {
             clearInterval(checkInterval);
