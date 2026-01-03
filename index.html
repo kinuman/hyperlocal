@@ -42,41 +42,66 @@
         color: #047857;
     }
 
-    .add-box {
+    .status-box {
         background: white;
         border-radius: 30px;
         padding: 30px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         margin-bottom: 30px;
+        text-align: center;
     }
 
-    .add-label {
+    .status-text {
         font-size: 1.5rem;
-        font-weight: bold;
         color: #065f46;
-        margin-bottom: 20px;
-        display: block;
+        margin-bottom: 15px;
+        font-weight: bold;
     }
 
-    #addButton {
+    .status-detail {
+        font-size: 1.2rem;
+        color: #059669;
+        line-height: 1.6;
+    }
+
+    .indicator {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 10px;
+        animation: pulse 2s infinite;
+    }
+
+    .indicator.active {
+        background: #10b981;
+    }
+
+    .indicator.waiting {
+        background: #f59e0b;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    #manualButton {
         width: 100%;
         background: #059669;
         color: white;
         border: none;
-        padding: 25px;
-        font-size: 1.8rem;
+        padding: 20px;
+        font-size: 1.5rem;
         font-weight: bold;
         border-radius: 20px;
         cursor: pointer;
         transition: background 0.3s;
+        margin-top: 15px;
     }
 
-    #addButton:hover {
+    #manualButton:hover {
         background: #047857;
-    }
-
-    #addButton:active {
-        transform: scale(0.98);
     }
 
     .list-header {
@@ -174,13 +199,19 @@
     <div class="container">
         <header>
             <h1>クリップボード</h1>
-            <p class="subtitle">コピーした内容を保存</p>
+            <p class="subtitle">コピーした内容を自動保存</p>
         </header>
 
 ```
-    <div class="add-box">
-        <label class="add-label">コピーした内容を保存</label>
-        <button id="addButton">📋 クリップボードから保存</button>
+    <div class="status-box">
+        <div class="status-text">
+            <span class="indicator active" id="indicator"></span>
+            <span id="statusText">自動監視中...</span>
+        </div>
+        <div class="status-detail" id="statusDetail">
+            コピーすると自動で保存されます
+        </div>
+        <button id="manualButton">📋 今すぐ保存</button>
     </div>
 
     <div class="list-header" id="listHeader">保存した内容（0件）</div>
@@ -189,12 +220,50 @@
 
 <script>
     let items = [];
+    let lastClipboardText = '';
+    let checkInterval;
 
-    // 初期読み込み
     loadItems();
+    startAutoCheck();
 
-    // 保存ボタン
-    document.getElementById('addButton').addEventListener('click', async () => {
+    // 自動チェック開始
+    function startAutoCheck() {
+        // 3秒ごとにクリップボードをチェック
+        checkInterval = setInterval(checkClipboard, 3000);
+        updateStatus('監視中', '3秒ごとに自動チェック');
+    }
+
+    // クリップボードチェック
+    async function checkClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            
+            // 新しいテキストがある場合のみ保存
+            if (text && text.trim() && text !== lastClipboardText) {
+                const exists = items.some(item => item.text === text.trim());
+                
+                if (!exists) {
+                    lastClipboardText = text;
+                    await addItem(text);
+                    updateStatus('保存完了！', '新しい内容を保存しました', true);
+                    
+                    // 2秒後に通常表示に戻す
+                    setTimeout(() => {
+                        updateStatus('監視中', '3秒ごとに自動チェック');
+                    }, 2000);
+                }
+            }
+        } catch (error) {
+            // 権限がない場合
+            if (error.name === 'NotAllowedError') {
+                clearInterval(checkInterval);
+                updateStatus('権限が必要です', '下のボタンを押して許可してください', false);
+            }
+        }
+    }
+
+    // 手動保存ボタン
+    document.getElementById('manualButton').addEventListener('click', async () => {
         try {
             const text = await navigator.clipboard.readText();
             if (!text.trim()) {
@@ -202,26 +271,51 @@
                 return;
             }
 
-            // 重複チェック
             const exists = items.some(item => item.text === text.trim());
             if (exists) {
                 alert('同じ内容が既に保存されています');
                 return;
             }
 
-            const item = {
-                id: Date.now().toString(),
-                text: text.trim(),
-                timestamp: Date.now()
-            };
-
-            await saveItem(item);
-            items.unshift(item);
-            renderItems();
+            await addItem(text);
+            lastClipboardText = text;
+            
+            // 自動チェックを再開
+            if (!checkInterval) {
+                startAutoCheck();
+            }
         } catch (error) {
-            alert('クリップボードの読み取りに失敗しました。\nブラウザの設定でクリップボードへのアクセスを許可してください。');
+            alert('クリップボードの読み取りに失敗しました');
         }
     });
+
+    // アイテム追加
+    async function addItem(text) {
+        const item = {
+            id: Date.now().toString(),
+            text: text.trim(),
+            timestamp: Date.now()
+        };
+
+        await saveItem(item);
+        items.unshift(item);
+        renderItems();
+    }
+
+    // ステータス更新
+    function updateStatus(mainText, detailText, isSuccess = null) {
+        document.getElementById('statusText').textContent = mainText;
+        document.getElementById('statusDetail').textContent = detailText;
+        
+        const indicator = document.getElementById('indicator');
+        if (isSuccess === true) {
+            indicator.className = 'indicator active';
+        } else if (isSuccess === false) {
+            indicator.className = 'indicator waiting';
+        } else {
+            indicator.className = 'indicator active';
+        }
+    }
 
     async function loadItems() {
         const keys = Object.keys(localStorage).filter(k => k.startsWith('clip:'));
@@ -295,7 +389,7 @@
                 <div class="item-date">${formatDate(item.timestamp)}</div>
                 <div class="item-text">${escapeHtml(item.text)}</div>
                 <div class="item-buttons">
-                    <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(item.text).replace(/'/g, "\\'")}', this)">
+                    <button class="copy-btn" onclick="copyToClipboard(\`${escapeHtml(item.text).replace(/`/g, '\\`')}\`, this)">
                         📋 コピー
                     </button>
                     <button class="delete-btn" onclick="deleteItem('${item.id}')">
@@ -311,6 +405,13 @@
         div.textContent = text;
         return div.innerHTML;
     }
+
+    // ページを離れる時にクリーンアップ
+    window.addEventListener('beforeunload', () => {
+        if (checkInterval) {
+            clearInterval(checkInterval);
+        }
+    });
 </script>
 ```
 
